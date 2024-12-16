@@ -96,6 +96,7 @@ func (s *Service) reportStatus() {
 				"initializing":        initializing,
 				"disconnected":        disconnected,
 				"available_blob_txns": txCount,
+				"measurements_count":  len(measurements),
 				"min_bandwidth":       fmt.Sprintf("%.2f Mbit/sec", minBW/1e6),
 				"max_bandwidth":       fmt.Sprintf("%.2f Mbit/sec", maxBW/1e6),
 				"p50_bandwidth":       fmt.Sprintf("%.2f Mbit/sec", p50BW/1e6),
@@ -152,9 +153,9 @@ func (s *Service) requestTransactions() {
 	errors := make([]error, 0)
 	var errorsMu sync.Mutex
 
-	for num, client := range s.clients {
+	for runner, client := range s.clients {
 		wg.Add(1)
-		go func(c *peer.Client, num int) {
+		go func(c *peer.Client, runner int) {
 			defer wg.Done()
 
 			wrapped, err := c.RequestTransactions(txs)
@@ -182,16 +183,16 @@ func (s *Service) requestTransactions() {
 					"elapsed":   wrapped.Elapsed,
 					"bytes":     wrapped.Bytes,
 					"bandwidth": fmt.Sprintf("%.2f Mbit/sec", bandwidth/1e6),
-					"runner":    num,
+					"runner":    runner,
 				}).Info("Bandwidth test succeeded")
 			} else if wrapped != nil {
 				logrus.WithFields(logrus.Fields{
 					"elapsed": wrapped.Elapsed,
 					"bytes":   wrapped.Bytes,
-					"runner":  num,
+					"runner":  runner,
 				}).Debug("Bandwidth test not recorded (below threshold)")
 			}
-		}(client, num)
+		}(client, runner)
 	}
 
 	wg.Wait()

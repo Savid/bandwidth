@@ -35,7 +35,7 @@ type ForkID struct {
 
 type Client struct {
 	peer            string
-	peerNum         int
+	runner          int
 	mu              sync.RWMutex
 	state           State
 	transactionChan chan<- common.Hash
@@ -61,10 +61,10 @@ type Client struct {
 	log                logrus.FieldLogger
 }
 
-func New(peerAddr string, peerNum int, txChan chan<- common.Hash) *Client {
+func New(peerAddr string, runner int, txChan chan<- common.Hash) *Client {
 	c := &Client{
 		peer:            peerAddr,
-		peerNum:         peerNum,
+		runner:          runner,
 		state:           Initializing,
 		transactionChan: txChan,
 		stopChan:        make(chan struct{}),
@@ -77,8 +77,8 @@ func New(peerAddr string, peerNum int, txChan chan<- common.Hash) *Client {
 	}
 
 	c.log = logrus.WithFields(logrus.Fields{
-		"peer": c.peer,
-		"num":  c.peerNum,
+		"peer":   c.peer,
+		"runner": c.runner,
 	})
 	c.log.Debug("Client initialized")
 
